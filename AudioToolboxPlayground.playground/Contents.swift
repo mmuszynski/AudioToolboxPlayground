@@ -8,7 +8,7 @@ let violinUrl = [#FileReference(fileReferenceLiteral: "violin.wav")#]
 
 //allocate the audio file ref and open it with the sheep URL
 var af = ExtAudioFileRef()
-var err: OSStatus = ExtAudioFileOpenURL(url as CFURL, &af)
+var err: OSStatus = ExtAudioFileOpenURL(violinUrl as CFURL, &af)
 guard err == noErr else {
     fatalError("unable to open extAudioFile: \(err)")
 }
@@ -23,8 +23,18 @@ guard err == noErr else {
     fatalError("unable to get file data format: \(err)")
 }
 
+var clientASBD = AudioStreamBasicDescription()
+clientASBD.mSampleRate = fileASBD.mSampleRate
+clientASBD.mFormatID = kAudioFormatLinearPCM
+clientASBD.mFormatFlags = kAudioFormatFlagIsFloat
+clientASBD.mBytesPerPacket = 4
+clientASBD.mFramesPerPacket = 1
+clientASBD.mBytesPerFrame = 4
+clientASBD.mChannelsPerFrame = 1
+clientASBD.mBitsPerChannel = 32
+
 //set the ASBD to be used
-err = ExtAudioFileSetProperty(af, kExtAudioFileProperty_ClientDataFormat, size, &fileASBD)
+err = ExtAudioFileSetProperty(af, kExtAudioFileProperty_ClientDataFormat, size, &clientASBD)
 guard err == noErr else {
     fatalError("unable to set client data format: \(err)")
 }
@@ -67,7 +77,7 @@ var bufferList = AudioBufferList(
 //read the data
 var count: UInt32 = 0
 var ioFrames: UInt32 = 4096
-while ioFrames > 0 {
+while count == 0 {
     err = ExtAudioFileRead(af, &ioFrames, &bufferList)
     
     guard err == noErr else {
@@ -77,6 +87,8 @@ while ioFrames > 0 {
     count += ioFrames
     finalData += data
 }
+
+print(finalData[0])
 
 //dispose of the file
 err = ExtAudioFileDispose(af)
