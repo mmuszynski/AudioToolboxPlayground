@@ -6,53 +6,44 @@ import AudioToolbox
 let url = [#FileReference(fileReferenceLiteral: "baah.wav")#]
 let violinUrl = [#FileReference(fileReferenceLiteral: "violin.wav")#]
 
+//allocate the audio file ref and open it with the sheep URL
 var af = ExtAudioFileRef()
 var err: OSStatus = ExtAudioFileOpenURL(url as CFURL, &af)
 guard err == noErr else {
-    fatalError("freak out error \(err)")
+    fatalError("unable to open extAudioFile: \(err)")
 }
 
-var clientASBD = AudioStreamBasicDescription(
-    mSampleRate: 44100,
-    mFormatID: kAudioFormatLinearPCM,
-    mFormatFlags: 9,
-    mBytesPerPacket: 2,
-    mFramesPerPacket: 1,
-    mBytesPerFrame: 2,
-    mChannelsPerFrame: 2,
-    mBitsPerChannel: 8,
-    mReserved: 0)
-
+//allocate an empty ASBD
 var fileASBD = AudioStreamBasicDescription()
 
-var size = UInt32(sizeofValue(clientASBD))
+//get the ASBD from the file
+var size = UInt32(sizeofValue(fileASBD))
 err = ExtAudioFileGetProperty(af, kExtAudioFileProperty_FileDataFormat, &size, &fileASBD)
 guard err == noErr else {
-    fatalError("another error code \(err)")
+    fatalError("unable to get file data format: \(err)")
 }
 
-print(fileASBD)
+//set the ASBD to be used
 err = ExtAudioFileSetProperty(af, kExtAudioFileProperty_ClientDataFormat, size, &fileASBD)
-
-
 guard err == noErr else {
-    fatalError("another error code \(err)")
+    fatalError("unable to set client data format: \(err)")
 }
 
+//check the number of frames expected
 var numberOfFrames: Int64 = 0
 var propertySize = UInt32(sizeof(Int64))
 err = ExtAudioFileGetProperty(af, kExtAudioFileProperty_FileLengthFrames, &propertySize, &numberOfFrames)
 guard err == noErr else {
-    fatalError("another error code \(err)")
+    fatalError("unable to get number of frames expected: \(err)")
 }
 
-print(numberOfFrames)
-
-let bufferFrames = 4000
+//initialize a buffer and a place to put the final data
+let bufferFrames = 4096
 var data = [Float](count: bufferFrames, repeatedValue: 0)
 let dataSize = sizeof(Float) * bufferFrames
 var finalData = [Float]()
 
+//pack all this into a buffer list
 var bufferList = AudioBufferList(
     mNumberBuffers: 1,
     mBuffers: AudioBuffer(
@@ -62,31 +53,32 @@ var bufferList = AudioBufferList(
     )
 )
 
-var outputAF = ExtAudioFileRef()
-let docsPath = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first
-let filePath = docsPath!.stringByAppendingString("file.wav")
-let outputURL = NSURL(fileURLWithPath: filePath)
-err = ExtAudioFileCreateWithURL(outputURL, kAudioFileWAVEType, &fileASBD, nil, AudioFileFlags.EraseFile.rawValue, &outputAF)
-guard err == noErr else {
-    fatalError("unhelpful error code is \(err)")
-}
+//commented out things I was working with to output the file
+//
+//var outputAF = ExtAudioFileRef()
+//let docsPath = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first
+//let filePath = docsPath!.stringByAppendingString("file.wav")
+//let outputURL = NSURL(fileURLWithPath: filePath)
+//err = ExtAudioFileCreateWithURL(outputURL, kAudioFileWAVEType, &fileASBD, nil, AudioFileFlags.EraseFile.rawValue, &outputAF)
+//guard err == noErr else {
+//    fatalError("unhelpful error code is \(err)")
+//}
 
+//read the data
 var count: UInt32 = 0
-var ioFrames: UInt32 = 4000
+var ioFrames: UInt32 = 4096
 while ioFrames > 0 {
     err = ExtAudioFileRead(af, &ioFrames, &bufferList)
     
     guard err == noErr else {
-        fatalError("unhelpful error code is \(err)")
+        fatalError("error reading the data: \(err)")
     }
     
-    //err = ExtAudioFileWrite(outputAF, ioFrames, &bufferList)
     count += ioFrames
     finalData += data
 }
 
-print(finalData[0])
-
+//dispose of the file
 err = ExtAudioFileDispose(af)
 guard err == noErr else {
     fatalError("another error code \(err)")
