@@ -50,11 +50,8 @@ guard err == noErr else {
 
 //initialize a buffer and a place to put the final data
 let bufferFrames = 4096
-var data = [Float](count: bufferFrames, repeatedValue: 0)
-let dataSize = sizeof(Float) * bufferFrames
 //var finalData = [Float]()
 
-let dataPtr = UnsafeMutablePointer<Float>(malloc(bufferFrames * sizeof(Float.self)))
 let finalData = UnsafeMutablePointer<Float>(malloc(Int(numberOfFrames) * sizeof(Float.self)))
 
 //pack all this into a buffer list
@@ -62,8 +59,8 @@ var bufferList = AudioBufferList(
     mNumberBuffers: 1,
     mBuffers: AudioBuffer(
         mNumberChannels: 2,
-        mDataByteSize: UInt32(data.count),
-        mData: dataPtr
+        mDataByteSize: UInt32(sizeof(Float.self) * bufferFrames),
+        mData: finalData
     )
 )
 
@@ -77,9 +74,16 @@ while count == 0 {
         fatalError("error reading the data: \(err)")
     }
     
+    bufferList = AudioBufferList(
+        mNumberBuffers: 1,
+        mBuffers: AudioBuffer(
+            mNumberChannels: 2,
+            mDataByteSize: UInt32(sizeofValue(finalData)),
+            mData: finalData + Int(ioFrames)
+        )
+    )
+    
     count += ioFrames
-    //here???
-    //finalData += UnsafeBufferPointer<Float>(start: dataPtr, count: 4096)
 }
 
 //dispose of the file
@@ -93,11 +97,15 @@ let frames = 4096
 let length = vDSP_Length(log2(CDouble(frames)))
 let setup = vDSP_create_fftsetup(length, FFTRadix(kFFTRadix2));
 
-var outReal = [Float](count: frames/2, repeatedValue: 0)
-var outImag = [Float](count: frames/2, repeatedValue: 0)
-var out = COMPLEX_SPLIT(realp: &outReal, imagp: &outImag)
+let outReal = UnsafeMutablePointer<Float>(malloc(Int(numberOfFrames/2) * sizeof(Float.self)))
+let outImag = UnsafeMutablePointer<Float>(malloc(Int(numberOfFrames/2) * sizeof(Float.self)))
 
+var out = COMPLEX_SPLIT(realp: outReal, imagp: outImag)
 var dataAsComplex = UnsafePointer<COMPLEX>(finalData)
 
 vDSP_ctoz(dataAsComplex, 2, &out, 1, UInt(frames/2))
 vDSP_fft_zip(setup, &out, 1, length, Int32(FFT_FORWARD))
+
+free(finalData)
+free(outReal)
+free(outImag)
