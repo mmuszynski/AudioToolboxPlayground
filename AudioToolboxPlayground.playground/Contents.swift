@@ -52,7 +52,10 @@ guard err == noErr else {
 let bufferFrames = 4096
 var data = [Float](count: bufferFrames, repeatedValue: 0)
 let dataSize = sizeof(Float) * bufferFrames
-var finalData = [Float]()
+//var finalData = [Float]()
+
+let dataPtr = UnsafeMutablePointer<Float>(malloc(bufferFrames * sizeof(Float.self)))
+let finalData = UnsafeMutablePointer<Float>(malloc(Int(numberOfFrames) * sizeof(Float.self)))
 
 //pack all this into a buffer list
 var bufferList = AudioBufferList(
@@ -60,7 +63,7 @@ var bufferList = AudioBufferList(
     mBuffers: AudioBuffer(
         mNumberChannels: 2,
         mDataByteSize: UInt32(data.count),
-        mData: &data
+        mData: dataPtr
     )
 )
 
@@ -75,7 +78,8 @@ while count == 0 {
     }
     
     count += ioFrames
-    finalData += data
+    //here???
+    //finalData += UnsafeBufferPointer<Float>(start: dataPtr, count: 4096)
 }
 
 //dispose of the file
@@ -85,20 +89,15 @@ guard err == noErr else {
 }
 
 //fft operations
-let frames = 1024
+let frames = 4096
 let length = vDSP_Length(log2(CDouble(frames)))
 let setup = vDSP_create_fftsetup(length, FFTRadix(kFFTRadix2));
 
 var outReal = [Float](count: frames/2, repeatedValue: 0)
 var outImag = [Float](count: frames/2, repeatedValue: 0)
-var out = COMPLEX_SPLIT(realp: UnsafeMutablePointer(outReal), imagp: UnsafeMutablePointer(outImag))
+var out = COMPLEX_SPLIT(realp: &outReal, imagp: &outImag)
 
-var dataAsComplex = [COMPLEX]()
-var i: Int
-for i=0; i<frames; i++ {
-    dataAsComplex.append( COMPLEX(real: finalData[i], imag: finalData[i+1]))
-    i++
-}
+var dataAsComplex = UnsafePointer<COMPLEX>(finalData)
 
 vDSP_ctoz(dataAsComplex, 2, &out, 1, UInt(frames/2))
 vDSP_fft_zip(setup, &out, 1, length, Int32(FFT_FORWARD))
