@@ -2,13 +2,14 @@
 
 import Cocoa
 import AudioToolbox
+import Accelerate
 
 let url = [#FileReference(fileReferenceLiteral: "baah.wav")#]
 let violinUrl = [#FileReference(fileReferenceLiteral: "violin.wav")#]
-
+let donkey = [#FileReference(fileReferenceLiteral: "donkey.mp3")#]
 //allocate the audio file ref and open it with the sheep URL
 var af = ExtAudioFileRef()
-var err: OSStatus = ExtAudioFileOpenURL(violinUrl as CFURL, &af)
+var err: OSStatus = ExtAudioFileOpenURL(donkey as CFURL, &af)
 guard err == noErr else {
     fatalError("unable to open extAudioFile: \(err)")
 }
@@ -26,7 +27,7 @@ guard err == noErr else {
 var clientASBD = AudioStreamBasicDescription()
 clientASBD.mSampleRate = fileASBD.mSampleRate
 clientASBD.mFormatID = kAudioFormatLinearPCM
-clientASBD.mFormatFlags = kAudioFormatFlagIsFloat
+clientASBD.mFormatFlags = kAudioFormatFlagsNativeFloatPacked
 clientASBD.mBytesPerPacket = 4
 clientASBD.mFramesPerPacket = 1
 clientASBD.mBytesPerFrame = 4
@@ -63,17 +64,6 @@ var bufferList = AudioBufferList(
     )
 )
 
-//commented out things I was working with to output the file
-//
-//var outputAF = ExtAudioFileRef()
-//let docsPath = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first
-//let filePath = docsPath!.stringByAppendingString("file.wav")
-//let outputURL = NSURL(fileURLWithPath: filePath)
-//err = ExtAudioFileCreateWithURL(outputURL, kAudioFileWAVEType, &fileASBD, nil, AudioFileFlags.EraseFile.rawValue, &outputAF)
-//guard err == noErr else {
-//    fatalError("unhelpful error code is \(err)")
-//}
-
 //read the data
 var count: UInt32 = 0
 var ioFrames: UInt32 = 4096
@@ -88,10 +78,27 @@ while count == 0 {
     finalData += data
 }
 
-print(finalData[0])
-
 //dispose of the file
 err = ExtAudioFileDispose(af)
 guard err == noErr else {
     fatalError("another error code \(err)")
 }
+
+//fft operations
+let frames = 1024
+let length = vDSP_Length(log2(CDouble(frames)))
+let setup = vDSP_create_fftsetup(length, FFTRadix(kFFTRadix2));
+
+var outReal = [Float](count: frames/2, repeatedValue: 0)
+var outImag = [Float](count: frames/2, repeatedValue: 0)
+var out = COMPLEX_SPLIT(realp: UnsafeMutablePointer(outReal), imagp: UnsafeMutablePointer(outImag))
+
+var dataAsComplex = [COMPLEX]()
+var i: Int
+for i=0; i<frames; i++ {
+    dataAsComplex.append( COMPLEX(real: finalData[i], imag: finalData[i+1]))
+    i++
+}
+
+vDSP_ctoz(dataAsComplex, 2, &out, 1, UInt(frames/2))
+vDSP_fft_zip(setup, &out, 1, length, Int32(FFT_FORWARD))
