@@ -3,37 +3,42 @@
    version = "3.0">
    <TimelineItems>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=1356&amp;EndingColumnNumber=9&amp;EndingLineNumber=24&amp;StartingColumnNumber=1&amp;StartingLineNumber=24&amp;Timestamp=472156464.222928"
+         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingColumnNumber=9&amp;EndingLineNumber=6&amp;StartingColumnNumber=1&amp;StartingLineNumber=6&amp;Timestamp=472165845.409465"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=1356&amp;EndingColumnNumber=16&amp;EndingLineNumber=24&amp;StartingColumnNumber=1&amp;StartingLineNumber=24&amp;Timestamp=472156464.223099"
+         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingColumnNumber=16&amp;EndingLineNumber=6&amp;StartingColumnNumber=1&amp;StartingLineNumber=6&amp;Timestamp=472165845.409628"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=1356&amp;EndingColumnNumber=18&amp;EndingLineNumber=24&amp;StartingColumnNumber=1&amp;StartingLineNumber=24&amp;Timestamp=472156464.223245"
+         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingColumnNumber=18&amp;EndingLineNumber=6&amp;StartingColumnNumber=1&amp;StartingLineNumber=6&amp;Timestamp=472165845.409763"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "file:///Users/mike/Documents/Cocoa/Playgrounds/AudioToolboxPlayground.playground#CharacterRangeLen=59&amp;CharacterRangeLoc=1475&amp;EndingLineNumber=43&amp;StartingLineNumber=43&amp;Timestamp=472156464.223383"
+         documentLocation = "file:///Users/mike/Documents/Cocoa/Playgrounds/AudioToolboxPlayground.playground#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingLineNumber=6&amp;StartingLineNumber=6&amp;Timestamp=472165845.409893"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=2072&amp;EndingColumnNumber=17&amp;EndingLineNumber=91&amp;StartingColumnNumber=5&amp;StartingLineNumber=90&amp;Timestamp=472156969.229775"
+         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingColumnNumber=17&amp;EndingLineNumber=6&amp;StartingColumnNumber=5&amp;StartingLineNumber=6&amp;Timestamp=472165845.410009"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=3843&amp;EndingColumnNumber=11&amp;EndingLineNumber=114&amp;StartingColumnNumber=5&amp;StartingLineNumber=114&amp;Timestamp=472159395.532098"
+         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingColumnNumber=11&amp;EndingLineNumber=6&amp;StartingColumnNumber=5&amp;StartingLineNumber=6&amp;Timestamp=472165845.410138"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
       <LoggerValueHistoryTimelineItem
-         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=3628&amp;EndingColumnNumber=65&amp;EndingLineNumber=114&amp;StartingColumnNumber=1&amp;StartingLineNumber=114&amp;Timestamp=472158808.432552"
+         documentLocation = "#CharacterRangeLen=0&amp;CharacterRangeLoc=106&amp;EndingColumnNumber=65&amp;EndingLineNumber=6&amp;StartingColumnNumber=1&amp;StartingLineNumber=6&amp;Timestamp=472165845.410264"
+         selectedRepresentationIndex = "0"
+         shouldTrackSuperviewWidth = "NO">
+      </LoggerValueHistoryTimelineItem>
+      <LoggerValueHistoryTimelineItem
+         documentLocation = "#CharacterRangeLen=7&amp;CharacterRangeLoc=6309&amp;EndingColumnNumber=26&amp;EndingLineNumber=180&amp;StartingColumnNumber=19&amp;StartingLineNumber=180&amp;Timestamp=472192255.960626"
          selectedRepresentationIndex = "0"
          shouldTrackSuperviewWidth = "NO">
       </LoggerValueHistoryTimelineItem>
