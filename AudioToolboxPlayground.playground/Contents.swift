@@ -149,7 +149,6 @@ class FFTAnalzer: NSObject {
         }
         
         let fft_length = vDSP_Length(log2(CDouble(frames)))
-        //let fft_length: UInt = 16
         let setup = vDSP_create_fftsetup(fft_length, Int32(kFFTRadix2))
         if setup == nil {
             fatalError("Could not setup fft")
@@ -170,9 +169,9 @@ class FFTAnalzer: NSObject {
         vDSP_ctoz(dataAsComplex, 2, &out, 1, UInt(frames/2))
         vDSP_fft_zip(setup, &out, 1, fft_length, Int32(FFT_FORWARD))
         
-        let power = UnsafeMutablePointer<Float>.alloc(Int(frames/2) * sizeof(Float.self))
+        let power = UnsafeMutablePointer<Float>.alloc(Int(frames) * sizeof(Float.self))
         defer {
-            power.dealloc(Int(frames/2) * sizeof(Float.self))
+            power.dealloc(Int(frames) * sizeof(Float.self))
         }
         
         for i in 0..<frames/2 {
@@ -194,8 +193,10 @@ let donkey = [#FileReference(fileReferenceLiteral: "donkey.mp3")#]
 let tone100hz = [#FileReference(fileReferenceLiteral: "100hz44100.wav")#]
 let tone880hz = [#FileReference(fileReferenceLiteral: "880.wav")#]
 let tone20000hz = [#FileReference(fileReferenceLiteral: "20000.wav")#]
-let a = FFTAnalzer(url: tone100hz, sampleRate: 44100, fftSamples: 4096)
+let a = FFTAnalzer(url: tone100hz, sampleRate: 44100, fftSamples: 4096*2)
 try! a.performAnalysis()
+a.fftOutput.count
 for x in a.fftOutput {
     x
 }
+
