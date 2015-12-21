@@ -6,10 +6,31 @@ import Accelerate
 
 enum FFTAnalyzerError: ErrorType {
     case GeneralError(OSStatus)
+    case CouldNotResolveURL(OSStatus)
     case CouldNotGetAudioFileFormat(OSStatus)
     case CouldNotSetAudioFormat(OSStatus)
     case CouldNotGetAudioFileSize(OSStatus)
     case ErrorReadingAudioData(OSStatus)
+    case BadFFTDataProduced
+    
+    func description() -> String {
+        switch self {
+        case .BadFFTDataProduced:
+            return "Bad FFT data"
+        case GeneralError(let status):
+            return "An unknown error has occurred \(status)"
+        case CouldNotGetAudioFileFormat(let status):
+            return "Could not get Audio File Format: \(status)"
+        case CouldNotSetAudioFormat(let status):
+            return "Could not set Audio File Format: \(status)"
+        case CouldNotGetAudioFileSize(let status):
+            return "Could not get Audio File Size: \(status)"
+        case ErrorReadingAudioData(let status):
+            return "Error reading Audio Data: \(status)"
+        case .CouldNotResolveURL(let status):
+            return "Could not resolve URL \(status)"
+        }
+    }
 }
 
 class FFTAnalzer: NSObject {
@@ -20,33 +41,19 @@ class FFTAnalzer: NSObject {
     var fftSamples: Int
     var fftOutput = [Float]()
     
-    var highestPowerFrequency: Float {
-        get {
-            if let maxElement = fftOutput.maxElement() {
-                if let index = fftOutput.indexOf(maxElement) {
-                    index
-                    sampleRate
-                    fftOutput.count
-                    return Float(index) * Float(sampleRate) / Float(fftOutput.count)
-                }
-            }
-            return 0
-        }
-    }
-    
     init(url: NSURL, sampleRate rate: Double = 0, fftSamples samples: Int = 0) {
         self.url = url
         self.sampleRate = rate
         self.fftSamples = samples
     }
     
-    
     func performAnalysis() throws {
         var af = ExtAudioFileRef()
         var err: OSStatus = ExtAudioFileOpenURL(url as CFURL, &af)
         guard err == noErr else {
-            throw FFTAnalyzerError.GeneralError(err)
+            throw FFTAnalyzerError.CouldNotResolveURL(err)
         }
+        af
         
         //allocate an empty ASBD
         var fileASBD = AudioStreamBasicDescription()
@@ -66,10 +73,10 @@ class FFTAnalzer: NSObject {
         clientASBD.mSampleRate = fileASBD.mSampleRate
         clientASBD.mFormatID = kAudioFormatLinearPCM
         clientASBD.mFormatFlags = kAudioFormatFlagIsFloat
-        clientASBD.mBytesPerPacket = 4
+        clientASBD.mBytesPerPacket = 8
         clientASBD.mFramesPerPacket = 1
-        clientASBD.mBytesPerFrame = 4
-        clientASBD.mChannelsPerFrame = 1
+        clientASBD.mBytesPerFrame = 8
+        clientASBD.mChannelsPerFrame = 2
         clientASBD.mBitsPerChannel = 32
         
         //set the ASBD to be used
@@ -88,7 +95,10 @@ class FFTAnalzer: NSObject {
         
         //initialize a buffer and a place to put the final data
         let bufferFrames = 4096
-        let finalData = UnsafeMutablePointer<Float>(malloc(Int(numberOfFrames) * sizeof(Float.self)))
+        let finalData = UnsafeMutablePointer<Float>.alloc(Int(numberOfFrames) * sizeof(Float.self))
+        defer {
+            finalData.dealloc(Int(numberOfFrames) * sizeof(Float.self))
+        }
         
         //pack all this into a buffer list
         var bufferList = AudioBufferList(
@@ -140,31 +150,40 @@ class FFTAnalzer: NSObject {
         
         let fft_length = vDSP_Length(log2(CDouble(frames)))
         //let fft_length: UInt = 16
-        let setup = vDSP_create_fftsetup(fft_length, FFTRadix(kFFTRadix2));
+        let setup = vDSP_create_fftsetup(fft_length, Int32(kFFTRadix2))
+        if setup == nil {
+            fatalError("Could not setup fft")
+        }
         
-        let outReal = UnsafeMutablePointer<Float>(malloc(Int(frames/2) * sizeof(Float.self)))
-        let outImag = UnsafeMutablePointer<Float>(malloc(Int(frames/2) * sizeof(Float.self)))
+        let outReal = UnsafeMutablePointer<Float>.alloc(Int(frames/2) * sizeof(Float.self))
+        defer {
+            outReal.dealloc(Int(frames/2) * sizeof(Float.self))
+        }
+        let outImag = UnsafeMutablePointer<Float>.alloc(Int(frames/2) * sizeof(Float.self))
+        defer {
+            outImag.dealloc(Int(frames/2) * sizeof(Float.self))
+        }
         
         var out = COMPLEX_SPLIT(realp: outReal, imagp: outImag)
-        let dataAsComplex = UnsafePointer<COMPLEX>(finalData)
+        var dataAsComplex = UnsafePointer<COMPLEX>(finalData)
         
         vDSP_ctoz(dataAsComplex, 2, &out, 1, UInt(frames/2))
         vDSP_fft_zip(setup, &out, 1, fft_length, Int32(FFT_FORWARD))
         
-        let power = UnsafeMutablePointer<Float>(malloc(Int(frames/2) * sizeof(Float.self)))
+        let power = UnsafeMutablePointer<Float>.alloc(Int(frames/2) * sizeof(Float.self))
+        defer {
+            power.dealloc(Int(frames/2) * sizeof(Float.self))
+        }
         
         for i in 0..<frames/2 {
             power[i] = sqrt(outReal[i] * outReal[i] + outImag[i] * outImag[i])
+            if isnan(power[i]) {
+                throw FFTAnalyzerError.BadFFTDataProduced
+            }
         }
         
-        outReal[0]
-        outImag[0]
         fftOutput = Array(UnsafeMutableBufferPointer(start: power, count: Int(frames/2)))
-        
-        free(finalData)
-        free(outReal)
-        free(outImag)
-        free(power)
+    
     }
 }
 
@@ -175,13 +194,8 @@ let donkey = [#FileReference(fileReferenceLiteral: "donkey.mp3")#]
 let tone100hz = [#FileReference(fileReferenceLiteral: "100hz44100.wav")#]
 let tone880hz = [#FileReference(fileReferenceLiteral: "880.wav")#]
 let tone20000hz = [#FileReference(fileReferenceLiteral: "20000.wav")#]
-let a = FFTAnalzer(url: tone100hz, sampleRate: 44100, fftSamples: 44100)
-try? a.performAnalysis()
-let bar = a.fftOutput.map({ "\($0)" }).joinWithSeparator(",\r")
-if let dir : NSString = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.AllDomainsMask, true).first {
-    let path = dir.stringByAppendingPathComponent("data.csv");
-    do {
-        try bar.writeToFile(path, atomically: false, encoding: NSUTF8StringEncoding)
-    }
-    catch {/* error handling here */}
+let a = FFTAnalzer(url: tone100hz, sampleRate: 44100, fftSamples: 4096)
+try! a.performAnalysis()
+for x in a.fftOutput {
+    x
 }
